@@ -86,7 +86,7 @@ TriggerEvent('es:addGroupCommand', 'comserv', 'admin', function(source, args, us
 	if args[1] and GetPlayerName(tgt) ~= nil and tonumber(args[2]) then
 		local legit = checkIfLegit(src, tgt);
 		if legit["legit"] == true then
-			TriggerEvent('esx_communityservice:sendToCommunityService', tgt, tonumber(args[2]))
+			sendToComServ(src, tgt, tonumber(args[2]))
 		else
 			print(
 				string.format(
@@ -111,7 +111,7 @@ TriggerEvent('es:addGroupCommand', 'endcomserv', 'admin', function(source, args,
 		if GetPlayerName(tgt) ~= nil then
 			local legit = checkIfLegit(src, tgt);
 			if legit["legit"] == true then
-				TriggerEvent('esx_communityservice:endCommunityServiceCommand', tgt)
+				releaseFromCommunityService(tgt)
 			else
 				print(
 					string.format(
@@ -126,7 +126,7 @@ TriggerEvent('es:addGroupCommand', 'endcomserv', 'admin', function(source, args,
 	else
 		local legit = checkIfLegit(src, src);
 		if legit["legit"] == true then
-			TriggerEvent('esx_communityservice:endCommunityServiceCommand', src)
+			releaseFromCommunityService(src)
 		else
 			print(
 				string.format(
@@ -275,7 +275,47 @@ AddEventHandler('esx_communityservice:sendToCommunityService', function(t, q)
 	end
 end)
 
+function sendToComServ(s, t, q)
+	local src, tgt = s, t;
+	local qty = q;
 
+	if src ~= nil and tgt ~= nil then
+		local legit = checkIfLegit(src, tgt);
+		if legit["legit"] == true then
+			local xSrc, xTgt = ESX.GetPlayerFromId(src), ESX.GetPlayerFromId(tgt);
+			if xSrc ~= nil and xTgt ~= nil then
+				local srcIdent, tgtIdent = xSrc.identifier, xTgt.identifier;
+
+				MySQL.Async.fetchAll('SELECT * FROM communityservice WHERE identifier = @identifier', {
+					['@identifier'] = tgtIdent
+				}, function(result)
+					if result[1] then
+						MySQL.Async.execute('UPDATE communityservice SET actions_remaining = @actions_remaining WHERE identifier = @identifier', {
+							['@identifier'] = tgtIdent,
+							['@actions_remaining'] = qty
+						})
+					else
+						MySQL.Async.execute('INSERT INTO communityservice (identifier, actions_remaining) VALUES (@identifier, @actions_remaining)', {
+							['@identifier'] = tgtIdent,
+							['@actions_remaining'] = qty
+						})
+					end
+				end)
+
+				TriggerClientEvent('chat:addMessage', -1, { args = { _U('judge'), _U('comserv_msg', GetPlayerName(tgt), qty) }, color = { 147, 196, 109 } })
+				TriggerClientEvent('esx_policejob:unrestrain', tgt)
+				TriggerClientEvent('esx_communityservice:inCommunityService', tgt, qty)
+			end
+		else
+			print(
+				string.format(
+					"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to remove [^5%s^7] ^5%s^7 from community service via the ^2sendToCommunityService^7 event. The legitimacy check returned ^1false^7 with the reason of ^2%s^7.",
+					GetCurrentResourceName(), src, GetPlayerName(src), tgt, GetPlayerName(tgt), legit["reason"]
+				)
+			)
+		end
+	end
+end
 
 
 
