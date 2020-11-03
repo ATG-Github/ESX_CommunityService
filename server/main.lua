@@ -37,8 +37,6 @@ function checkIfLegit(source, target)
 						["reason"] = "Source does not have the police job, and is not staff."
 					}
 					return legit
-				else
-					return legit
 				end
 			end
 			-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
