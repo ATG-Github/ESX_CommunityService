@@ -113,7 +113,7 @@ TriggerEvent('es:addGroupCommand', 'endcomserv', 'admin', function(source, args,
 		if GetPlayerName(tgt) ~= nil then
 			local legit = checkIfLegit(src, tgt);
 			if legit["legit"] == true then
-				TriggerEvent('esx_communityservice:endCommunityServiceCommand', tgt)
+				releaseFromCommunityService(tgt)
 			else
 				print(
 					string.format(
@@ -128,7 +128,7 @@ TriggerEvent('es:addGroupCommand', 'endcomserv', 'admin', function(source, args,
 	else
 		local legit = checkIfLegit(src, src);
 		if legit["legit"] == true then
-			TriggerEvent('esx_communityservice:endCommunityServiceCommand', src)
+			releaseFromCommunityService(src)
 		else
 			print(
 				string.format(
